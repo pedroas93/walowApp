@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions } from "react-native";
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions, Animated, Easing } from "react-native";
 import LinearGradient from 'react-native-linear-gradient';
-// import Animated, { Easing } from "react-native-reanimated";
-// import { runTiming } from "react-native-redash";
-
 import CircularProgress from "./components/CircularProgress";
 
 // const { Clock } = Animated;
@@ -12,15 +9,38 @@ export default () => {
   const [isActive, setIsActive] = useState(false);
   const [buttonMinutteSelected, setButtonMinutteSelected] = useState(1);
   const [isPaused, setIsPaused] = useState(true);
-  const [time, setTime] = useState(0);
+  const [time, setTime] = useState(60000);
   const [play, setPlay] = useState(false);
+  const move = useRef(new Animated.Value(0)).current;
+  const { width, height } = Dimensions.get('window');
+  const circleSize = width / 2;
+  const fadeAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: buttonMinutteSelected * 6 * 1000,
+          ease: Easing.linear,
+          useNativeDriver: true
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: buttonMinutteSelected * 6 * 1000,
+          ease: Easing.linear,
+          useNativeDriver: true
+        })
+      ]),
+    ).start();
+  }, [fadeAnim])
 
   useEffect(() => {
     let interval = null;
 
-    if (isActive && isPaused === false) {
+    if (isActive && isPaused === false && time > 0) {
       interval = setInterval(() => {
-        setTime((buttonMinutteSelected) => (buttonMinutteSelected+60 ) - 10);
+        setTime((buttonMinutteSelected) => (buttonMinutteSelected + 60) - 100);
       }, 10);
     } else {
       clearInterval(interval);
@@ -29,37 +49,38 @@ export default () => {
     return () => {
       clearInterval(interval);
     };
-  }, [isActive, isPaused]);
-
+  }, [isActive, isPaused, time]);
   const handleStart = () => {
+    // fadeIn()
     setIsActive(true);
     setIsPaused(false);
   };
 
-  const handlePauseResume = () => {
-    setIsPaused(!isPaused);
-  };
 
   const handleReset = () => {
     setIsActive(false);
     setTime(0);
   };
-
-
-
-  const empezar = () => {
-    handleStart()
-    setPlay(!play)
+  const playGo = () => {
+    if (!isActive) {
+      setIsActive(true);
+      setIsPaused(false);
+      // setIsPaused(false);
+    } else {
+      setIsActive(false);
+      // setIsPaused(true);
+      // setTime(0);
+    }
   }
 
   function Timer(props) {
     return (
       <View style={styles.timer}>
-        <Text style={styles.numbersTimer}>
-          {("0" + Math.floor((props.time / 1000) % 60)).slice(-2)}.
+        <Text style={isActive ? styles.numbersTimer : styles.numbersTimerDesactive}>
+          {("0" + Math.floor((props.time / 60000) % 60)).slice(-2)}:
         </Text>
-        <Text style={styles.numbersTimer}>
-          {("0" + ((props.time / 10) % 100)).slice(-2)}
+        <Text style={isActive ? styles.numbersTimer : styles.numbersTimerDesactive}>
+          {("0" + Math.floor((props.time / 1000) % 60)).slice(-2)}
         </Text>
       </View>
     );
@@ -71,42 +92,59 @@ export default () => {
         <TouchableOpacity>
           <Image style={styles.imageBack} source={require('./Files/Vector_5.png')} />
         </TouchableOpacity>
-        
         <View style={styles.middelCircle}>
           <View style={styles.centerCircle}>
-            {/* <Image style={styles.imageBack} source={require('./Files/Vector_5.png')} /> */}
             <TouchableOpacity>
-              <Image style={styles.icon} source={require('./Files/Vector_1.png')} />
+              {isActive &&
+                <Animated.Image
+                  source={require('./Files/Vector_6.png')}
+                  resizeMode='cover'
+                  style={{
+                    opacity: fadeAnim,
+                  }}
+                />
+              }
+              {!isActive &&
+                <Image style={isActive ? styles.iconActive : styles.icon} source={isActive ? require('./Files/Vector_6.png') : require('./Files/Vector_1.png')} />
+              }
             </TouchableOpacity>
           </View>
         </View>
         <Text style={styles.title}>Breathe & relax</Text>
-        <CircularProgress progress={3} />
-        <Timer time={buttonMinutteSelected} />
+        { (isActive && time >  time/2 )&& 
+
+        <Text style={styles.subTitle}>Inhale</Text>
+        }
+        {(isActive && time < time/2 )&&
+          
+          <Text style={styles.subTitle}>Exhale</Text>
+        }
+        <CircularProgress progress={time} buttonMinutteSelected={buttonMinutteSelected} />
+        <Timer time={time} />
         <TouchableOpacity
-          onPress={empezar}
+          onPress={playGo}
         >
-          <Image style={styles.play} source={require('./Files/Play.png')} />
+          <Image style={styles.play} source={isActive ? require('./Files/Pause.png') : require('./Files/Play.png')} />
         </TouchableOpacity>
         <View style={styles.timeSection}>
 
           <TouchableOpacity
             style={buttonMinutteSelected === 1 ? styles.minuteOneButtonSelected : styles.minuteOneButtonNotSelected}
-            onPress={() => setButtonMinutteSelected(1)}
+            onPress={() => { setButtonMinutteSelected(1), setTime(60000) }}
           >
             <Image style={styles.buttonActive} source={require('./Files/alarm_clock.png')} />
             <Text style={styles.minuteTextButtom}>1 min</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={buttonMinutteSelected === 2 ? styles.minuteTwoButtonSelected : styles.minuteTwoButtonNotSelected}
-            onPress={() => setButtonMinutteSelected(2)}
+            onPress={() => { setButtonMinutteSelected(2), setTime(120000) }}
           >
             <Image style={styles.buttonActive} source={require('./Files/alarm_clock.png')} />
             <Text style={styles.minuteTextButtom}>2 min</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={buttonMinutteSelected === 3 ? styles.minuteThreeButtonSelected : styles.minuteThreeButtonNotSelected}
-            onPress={() => setButtonMinutteSelected(3)}
+            onPress={() => { setButtonMinutteSelected(3), setTime(180000) }}
           >
             <Image style={styles.buttonActive} source={require('./Files/alarm_clock.png')} />
             <Text style={styles.minuteTextButtom}>3 min</Text>
@@ -121,7 +159,6 @@ export default () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: "black",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -132,34 +169,43 @@ const styles = StyleSheet.create({
     borderRadius: 5
   },
   imageBack: {
-    // position: absolute;
-    // width: 7,
-    // height: 19,
-    // left: 119,
-    // top: 102,
+    width: 7,
+    height: 19,
+    marginStart: -180,
     borderColor: '#FFFFFF',
     borderStyle: 'solid',
     transform: [{ rotate: '0deg' }]
   },
-  title: {
-    // width: 279,
-    // height: 108,
-    // left: 375,
-    // top: 240,
+  subTitle: {
+    position: "absolute",
     fontFamily: 'BRHendrix-SemiBold',
     fontStyle: 'normal',
     fontWeight: '600',
-    fontSize: 36,
+    fontSize: 20,
+    top: 180,
+    // lineHeight: 121,
+    // textAlign: 'center',
+    letterSpacing: -0.03,
+    color: '#FFFFFF',
+    // marginTop: 0,
+    // marginBottom: 0
+  },
+  title: {
+    fontFamily: 'BRHendrix-SemiBold',
+    fontStyle: 'normal',
+    fontWeight: '600',
+    fontSize: 20,
     lineHeight: 121,
     textAlign: 'center',
     letterSpacing: -0.03,
     color: '#FFFFFF',
+    paddingBottom: 0,
   },
   centerCircle: {
     position: 'absolute',
-    top: 26,
-    width: Dimensions.get('window').width * 0.4,
-    height: Dimensions.get('window').width * 0.4,
+    top: 20,
+    width: 174,
+    height: 174,
     backgroundColor: '#7B66FF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -168,9 +214,9 @@ const styles = StyleSheet.create({
   },
   middelCircle: {
     position: 'absolute',
-    top: 270,
-    width: Dimensions.get('window').width * 0.53,
-    height: Dimensions.get('window').width * 0.53,
+    top: 280,
+    width: 214,
+    height: 214,
     backgroundColor: '#7B66FF',
     opacity: 0.4,
     justifyContent: 'center',
@@ -183,6 +229,11 @@ const styles = StyleSheet.create({
     top: -40,
     left: -45
   },
+  iconActive: {
+    position: 'absolute',
+    top: -40,
+    left: -45
+  },
 
   play: {
     width: 60,
@@ -191,10 +242,10 @@ const styles = StyleSheet.create({
   },
 
   minuteOneButtonSelected: {
-    width: 110,
-    height: 53,
+    width: 100,
+    height: 40,
     backgroundColor: '#9386EA',
-    left: 10,
+    left: 50,
     top: 14,
     borderRadius: 11,
     flexDirection: 'row',
@@ -202,10 +253,10 @@ const styles = StyleSheet.create({
   },
 
   minuteOneButtonNotSelected: {
-    width: 110,
-    height: 53,
+    width: 100,
+    height: 40,
     backgroundColor: '#685BC3',
-    left: 10,
+    left: 50,
     top: 14,
     borderRadius: 11,
     flexDirection: 'row',
@@ -213,9 +264,9 @@ const styles = StyleSheet.create({
   },
 
   minuteTwoButtonSelected: {
-    width: 129,
-    height: 53,
-    left: 15,
+    width: 100,
+    height: 40,
+    left: 60,
     top: 14,
     borderRadius: 11,
     opacity: 0.2,
@@ -226,10 +277,10 @@ const styles = StyleSheet.create({
 
 
   minuteTwoButtonNotSelected: {
-    width: 110,
-    height: 53,
+    width: 100,
+    height: 40,
     backgroundColor: '#685BC3',
-    left: 10,
+    left: 60,
     top: 14,
     borderRadius: 11,
     flexDirection: 'row',
@@ -237,9 +288,9 @@ const styles = StyleSheet.create({
   },
 
   minuteThreeButtonSelected: {
-    width: 129,
-    height: 53,
-    left: 30,
+    width: 100,
+    height: 40,
+    left: 70,
     top: 14,
     borderRadius: 11,
     opacity: 0.2,
@@ -251,9 +302,9 @@ const styles = StyleSheet.create({
     // borderRadius: 11,
   },
   minuteThreeButtonNotSelected: {
-    width: 129,
-    height: 53,
-    left: 30,
+    width: 100,
+    height: 40,
+    left: 70,
     top: 14,
     borderRadius: 11,
     flexDirection: 'row',
@@ -268,6 +319,7 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width,
     flexDirection: 'row',
     flexWrap: 'wrap',
+
   },
 
   minuteTextButtom: {
@@ -275,27 +327,44 @@ const styles = StyleSheet.create({
     fontFamily: 'BRHendrix-Regular',
     fontStyle: 'normal',
     fontWeight: '400',
-    fontSize: 20,
+    fontSize: 15,
     lineHeight: 29,
     letterSpacing: -0.03,
     marginStart: 6,
-    marginTop: 9,
-    left: 0
+    marginTop: 0,
+    left: 2
   },
 
   buttonActive: {
     color: '#FFFFFF',
-    width: 35,
-    height: 35,
-    marginTop: 10,
-    left: 5,
+    width: 25,
+    height: 25,
+    marginTop: 5,
+    marginLeft: 11,
     zIndex: 10
   },
 
   timer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
 
+  numbersTimerDesactive: {
+    // width: 56,
+    // height: 29,
+    // left: 486,
+    marginTop: - 84,
+
+    fontFamily: 'BRHendrix-SemiBold',
+    fontStyle: 'normal',
+    fontWeight: '600',
+    fontSize: 24,
+    lineHeight: 121.4,
+
+    textAlign: 'center',
+    letterSpacing: -0.03,
+
+    color: '#00000000',
   },
 
   numbersTimer: {
