@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dimensions, StyleSheet, View } from "react-native";
+import { Dimensions, StyleSheet, View, Text } from "react-native";
 import Svg, {
     Defs, LinearGradient, Stop, Circle,
 } from "react-native-svg";
@@ -8,48 +8,43 @@ import Animated from "react-native-reanimated";
 // const { interpolateNode, multiply } = Animated;
 const { width } = Dimensions.get("window");
 const size = width - 10;
-const strokeWidth = 10;
+const strokeWidth = 5;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const { PI } = Math;
-const r = (size - strokeWidth) / 3;
+const r = (size - strokeWidth) / 3.2;
 const cx = size / 2;
 const cy = size / 2;
 
+
 interface CircularPogressProps {
     progress: any;
+    buttonMinutteSelected: any
 }
 
-export default ({ progress }: CircularPogressProps) => {
-    const circumference = r * 3 * PI;
-    //   const α = interpolateNode(progress, {
-    //     inputRange: [0, 1],
-    //     outputRange: [0, PI * 2],
-    //   });
-    const strokeDashoffset = -51;
+export default ({ progress, buttonMinutteSelected }: CircularPogressProps) => {
 
-    var x = setInterval(function() {
-
-        // Get today's date and time
-        var now = new Date().getTime();
-      
-        // Find the distance between now and the count down date
-        var distance = 1000;
-        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-    
-      }, 1000);
-
+    const circumference = r * 4 * PI;
+    let timeLong = 600;
+    if(buttonMinutteSelected === 1){
+        timeLong = 600;
+    }else if(buttonMinutteSelected === 2) {
+        timeLong = 1200
+    }else if(buttonMinutteSelected === 3) {
+        timeLong = 1800
+    }
+    const strokeDashoffset = (((progress)/timeLong-100)*10).toFixed();
+    console.log('----> ', strokeDashoffset)
     return (
         <Svg width={size} height={size} style={styles.container}>
             <View >
                 <Defs>
                     <LinearGradient id="grad" x1="0" y1="0" x2="50%" y2="0" >
-                        <Stop offset="0" stopColor="#ffff" />
-                        <Stop offset="1" stopColor="#ffff" />
+                        <Stop offset="0" stopColor="rgba(225, 225, 225, 0.1)" />
+                        <Stop offset="1" stopColor="rgba(225, 225, 225, 0.1)" />
                     </LinearGradient>
                 </Defs>
                 <Circle
-                    stroke="rgba(100, 100, 255, 0.2)"
+                    stroke="rgba(100, 100, 100, 0.2)"
                     fill="none"
                     {...{
                         strokeWidth, cx, cy, r,
@@ -76,8 +71,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF50'
     },
     circlePointer: {
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
         borderRadius: 44 / 2
     }
 });
