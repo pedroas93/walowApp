@@ -71,6 +71,7 @@ export default () => {
         <TouchableOpacity>
           <Image style={styles.imageBack} source={require('./Files/Vector_5.png')} />
         </TouchableOpacity>
+        
         <View style={styles.middelCircle}>
           <View style={styles.centerCircle}>
             {/* <Image style={styles.imageBack} source={require('./Files/Vector_5.png')} /> */}
